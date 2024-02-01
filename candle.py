@@ -1,5 +1,6 @@
 import yfinance as yf
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
 
 
@@ -12,10 +13,19 @@ def bollinger_candle(ticker_symbol, period, stock_data, window_size=20, num_std_
     stock_data["Lower"] = stock_data["MA"] - (
         stock_data["Close"].rolling(window=window_size).std() * num_std_dev
     )
+    # Create subplots and mention plot grid size
+    fig = make_subplots(
+        rows=2,
+        cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.03,
+        subplot_titles=(ticker_symbol, "Volume"),
+        row_width=[0.2, 0.7],
+    )
 
     # Create candlestick chart with Bollinger Bands
-    fig = go.Figure(
-        data=[
+    fig.add_traces(
+        [
             go.Candlestick(
                 x=stock_data.index,
                 open=stock_data["Open"],
@@ -46,7 +56,29 @@ def bollinger_candle(ticker_symbol, period, stock_data, window_size=20, num_std_
                 line=dict(color="blue"),
                 name="Lower Band",
             ),
-        ]
+        ],
+        rows=[1, 1, 1, 1],
+        cols=[1, 1, 1, 1],
+    )
+
+    # Color volume bars based on up or down day
+    colors = [
+        "green"
+        if stock_data["Close"].iloc[i] >= stock_data["Close"].iloc[i - 1]
+        else "red"
+        for i in range(1, len(stock_data))
+    ]
+
+    # Volume bar trace
+    fig.add_trace(
+        go.Bar(
+            x=stock_data.index[1:],
+            y=stock_data["Volume"][1:],
+            marker_color=colors,
+            name="Volume",
+        ),
+        row=2,
+        col=1,
     )
 
     # Customize the chart layout
@@ -63,16 +95,46 @@ def bollinger_candle(ticker_symbol, period, stock_data, window_size=20, num_std_
 
 
 def candle(ticker_symbol, period, stock_data):
-    fig = go.Figure(
-        data=[
-            go.Candlestick(
-                x=stock_data.index,
-                open=stock_data["Open"],
-                high=stock_data["High"],
-                low=stock_data["Low"],
-                close=stock_data["Close"],
-            )
-        ]
+    # Create subplots and mention plot grid size
+    fig = make_subplots(
+        rows=2,
+        cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.03,
+        subplot_titles=(ticker_symbol, "Volume"),
+        row_width=[0.2, 0.7],
+    )
+
+    fig.add_trace(
+        go.Candlestick(
+            x=stock_data.index,
+            open=stock_data["Open"],
+            high=stock_data["High"],
+            low=stock_data["Low"],
+            close=stock_data["Close"],
+        ),
+        row=1,
+        col=1,
+    )
+
+    # Color volume bars based on up or down day
+    colors = [
+        "green"
+        if stock_data["Close"].iloc[i] >= stock_data["Close"].iloc[i - 1]
+        else "red"
+        for i in range(1, len(stock_data))
+    ]
+
+    # Volume bar trace
+    fig.add_trace(
+        go.Bar(
+            x=stock_data.index[1:],
+            y=stock_data["Volume"][1:],
+            marker_color=colors,
+            name="Volume",
+        ),
+        row=2,
+        col=1,
     )
 
     # Customize the chart layout
@@ -119,8 +181,9 @@ def volume(ticker_symbol, period, stock_data):
     fig.update_layout(height=300)
 
     # Save the chart
-    filename = ticker_symbol + "_" + period + "_volume.png"
-    fig.write_image(filename)  # fig.show()
+    # filename = ticker_symbol + "_" + period + "_volume.png"
+    # fig.write_image(filename)  # fig.show()
+    return fig
 
 
 def get_charts(ticker_symbol, start_date, end_date):
@@ -129,12 +192,12 @@ def get_charts(ticker_symbol, start_date, end_date):
 
     # Candle 5 year
     candle(ticker_symbol=ticker_symbol, period="5 Year", stock_data=stock_data)
-    volume(ticker_symbol=ticker_symbol, period="5 Year", stock_data=stock_data)
+    # volume(ticker_symbol=ticker_symbol, period="5 Year", stock_data=stock_data)
 
     # Candle 90 days
     ninety = stock_data.tail(90).copy()
     candle(ticker_symbol=ticker_symbol, period="90 Day", stock_data=ninety)
-    volume(ticker_symbol=ticker_symbol, period="90 Day", stock_data=ninety)
+    # volume(ticker_symbol=ticker_symbol, period="90 Day", stock_data=ninety)
 
     # Bollinger & Candle 90 days
     bollinger_candle(ticker_symbol=ticker_symbol, period="90 Day", stock_data=ninety)
@@ -142,7 +205,7 @@ def get_charts(ticker_symbol, start_date, end_date):
     # Candle 5 days
     five_day = stock_data.tail(90)
     candle(ticker_symbol=ticker_symbol, period="5 Day", stock_data=five_day)
-    volume(ticker_symbol=ticker_symbol, period="5 Day", stock_data=five_day)
+    # volume(ticker_symbol=ticker_symbol, period="5 Day", stock_data=five_day)
 
 
 # Set the ticker symbol, start date, and end date
