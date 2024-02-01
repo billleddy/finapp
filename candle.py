@@ -41,6 +41,7 @@ def bollinger_candle(ticker_symbol, period, stock_data, window_size=20, num_std_
                 mode="lines",
                 line=dict(color="red"),
                 name="Upper Band",
+                showlegend=False,
             ),
             go.Scatter(
                 x=stock_data.index,
@@ -48,6 +49,7 @@ def bollinger_candle(ticker_symbol, period, stock_data, window_size=20, num_std_
                 mode="lines",
                 line=dict(color="black"),
                 name="Moving Average",
+                showlegend=False,
             ),
             go.Scatter(
                 x=stock_data.index,
@@ -55,6 +57,7 @@ def bollinger_candle(ticker_symbol, period, stock_data, window_size=20, num_std_
                 mode="lines",
                 line=dict(color="blue"),
                 name="Lower Band",
+                showlegend=False,
             ),
         ],
         rows=[1, 1, 1, 1],
@@ -76,6 +79,7 @@ def bollinger_candle(ticker_symbol, period, stock_data, window_size=20, num_std_
             y=stock_data["Volume"][1:],
             marker_color=colors,
             name="Volume",
+            showlegend=False,
         ),
         row=2,
         col=1,
