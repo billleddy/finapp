@@ -5,6 +5,53 @@ from datetime import datetime, timedelta
 import talib
 
 
+# Plot the 50 and 200 day moving averages
+def moving_averages(ticker_symbol, days, data):
+    fig = go.Figure()
+
+    # Plot 50-day moving average
+    fifty = data["Close"].rolling(window=50).mean()
+    fig.add_trace(
+        go.Scatter(
+            x=data.tail(days).index,
+            y=fifty.tail(days),  # data["Close"].rolling(window=50).mean(),
+            mode="lines",
+            name="50-day MA",
+        )
+    )
+
+    # Plot 200-day moving average
+    fig.add_trace(
+        go.Scatter(
+            x=data.tail(days).index,
+            y=data["Close"].rolling(window=200).mean().tail(days),
+            mode="lines",
+            name="200-day MA",
+        )
+    )
+
+    # Plot stock prices
+    fig.add_trace(
+        go.Scatter(
+            x=data.tail(days).index,
+            y=data["Close"].tail(days),
+            mode="lines",
+            name="Stock Price",
+        )
+    )
+
+    fig.update_layout(
+        title="TSLA Stock Prices with Moving Averages",
+        xaxis_title="Date",
+        yaxis_title="Stock Price (USD)",
+        xaxis_rangeslider_visible=False,
+    )
+
+    # Save the chart
+    filename = f"{ticker_symbol}_{days}_ma.png"
+    fig.write_image(filename)  # fig.show()
+
+
 def calculate_rsi(data):
     # Calculate RSI
     data["rsi"] = talib.RSI(data["Close"], timeperiod=14)
@@ -283,6 +330,8 @@ def get_charts(ticker_symbol, start_date, end_date):
 
     # Candle 5 year
     candle(ticker_symbol=ticker_symbol, period="5 Year", stock_data=stock_data)
+
+    moving_averages(ticker_symbol=ticker_symbol, days=365, data=stock_data)
 
     # Candle 90 days
     ninety = stock_data.tail(90).copy()
