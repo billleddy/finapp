@@ -58,19 +58,23 @@ def calculate_rsi(data):
     return data
 
 
-def rsi(ticker_symbol, period, stock_data):
+def rsi(ticker_symbol, days, stock_data):
     data = calculate_rsi(data=stock_data)
     fig = go.Figure()
 
     # Plot RSI
-    fig.add_trace(go.Scatter(x=data.index, y=data["rsi"], mode="lines", name="RSI"))
+    fig.add_trace(
+        go.Scatter(
+            x=data.tail(days).index, y=data["rsi"].tail(days), mode="lines", name="RSI"
+        )
+    )
 
     # Add horizontal lines for overbought and oversold levels
     fig.add_shape(
         dict(
             type="line",
-            x0=data.index.min(),
-            x1=data.index.max(),
+            x0=data.tail(days).index.min(),
+            x1=data.tail(days).index.max(),
             y0=70,
             y1=70,
             line=dict(color="red"),
@@ -80,8 +84,8 @@ def rsi(ticker_symbol, period, stock_data):
     fig.add_shape(
         dict(
             type="line",
-            x0=data.index.min(),
-            x1=data.index.max(),
+            x0=data.tail(days).index.min(),
+            x1=data.tail(days).index.max(),
             y0=30,
             y1=30,
             line=dict(color="green"),
@@ -90,13 +94,13 @@ def rsi(ticker_symbol, period, stock_data):
     )
 
     fig.update_layout(
-        title=f"{ticker_symbol} {period} Relative Strength Indicator",  # xaxis_title="Date",
+        title=f"{ticker_symbol} Relative Strength Indicator",  # xaxis_title="Date",
         yaxis_title="RSI",
         xaxis_rangeslider_visible=False,
     )
 
     # Save the chart
-    filename = ticker_symbol + "_" + period + "_rsi.png"
+    filename = f"{ticker_symbol}_{days}_rsi.png"
     fig.write_image(filename)  # fig.show()
 
 
@@ -108,20 +112,36 @@ def calculate_macd(stock_data):
     return stock_data
 
 
-def macd(ticker_symbol, period, stock_data):
+def macd(ticker_symbol, days, stock_data):
     data = calculate_macd(stock_data)
 
     fig = go.Figure()
 
     # Plot MACD and Signal lines
-    fig.add_trace(go.Scatter(x=data.index, y=data["macd"], mode="lines", name="MACD"))
     fig.add_trace(
-        go.Scatter(x=data.index, y=data["signal"], mode="lines", name="Signal Line")
+        go.Scatter(
+            x=data.tail(days).index,
+            y=data["macd"].tail(days),
+            mode="lines",
+            name="MACD",
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=data.tail(days).index,
+            y=data["signal"].tail(days),
+            mode="lines",
+            name="Signal Line",
+        )
     )
 
     # Plot histogram for MACD
     fig.add_trace(
-        go.Bar(x=data.index, y=data["macd"] - data["signal"], name="MACD Histogram")
+        go.Bar(
+            x=data.tail(days).index,
+            y=data["macd"].tail(days) - data["signal"].tail(days),
+            name="MACD Histogram",
+        )
     )
 
     fig.update_layout(
@@ -132,11 +152,11 @@ def macd(ticker_symbol, period, stock_data):
     )
 
     # Save the chart
-    filename = ticker_symbol + "_" + period + "_macd.png"
+    filename = f"{ticker_symbol}_{days}_macd.png"
     fig.write_image(filename)  # fig.show()
 
 
-def bollinger_candle(ticker_symbol, period, stock_data, window_size=20, num_std_dev=2):
+def bollinger_candle(ticker_symbol, days, stock_data, window_size=20, num_std_dev=2):
     # Calculate moving average and standard deviation
     stock_data["MA"] = stock_data["Close"].rolling(window=window_size).mean()
     stock_data["Upper"] = stock_data["MA"] + (
@@ -159,33 +179,33 @@ def bollinger_candle(ticker_symbol, period, stock_data, window_size=20, num_std_
     fig.add_traces(
         [
             go.Candlestick(
-                x=stock_data.index,
-                open=stock_data["Open"],
-                high=stock_data["High"],
-                low=stock_data["Low"],
-                close=stock_data["Close"],
+                x=stock_data.tail(days).index,
+                open=stock_data["Open"].tail(days),
+                high=stock_data["High"].tail(days),
+                low=stock_data["Low"].tail(days),
+                close=stock_data["Close"].tail(days),
                 name="Candlesticks",
                 showlegend=False,
             ),
             go.Scatter(
-                x=stock_data.index,
-                y=stock_data["Upper"],
+                x=stock_data.tail(days).index,
+                y=stock_data["Upper"].tail(days),
                 mode="lines",
                 line=dict(color="red"),
                 name="Upper Band",
                 showlegend=False,
             ),
             go.Scatter(
-                x=stock_data.index,
-                y=stock_data["MA"],
+                x=stock_data.tail(days).index,
+                y=stock_data["MA"].tail(days),
                 mode="lines",
                 line=dict(color="black"),
                 name="Moving Average",
                 showlegend=False,
             ),
             go.Scatter(
-                x=stock_data.index,
-                y=stock_data["Lower"],
+                x=stock_data.tail(days).index,
+                y=stock_data["Lower"].tail(days),
                 mode="lines",
                 line=dict(color="blue"),
                 name="Lower Band",
@@ -197,18 +217,17 @@ def bollinger_candle(ticker_symbol, period, stock_data, window_size=20, num_std_
     )
 
     # Color volume bars based on up or down day
+    subset = stock_data.tail(days)
     colors = [
-        "green"
-        if stock_data["Close"].iloc[i] >= stock_data["Close"].iloc[i - 1]
-        else "red"
-        for i in range(1, len(stock_data))
+        "green" if subset["Close"].iloc[i] >= subset["Close"].iloc[i - 1] else "red"
+        for i in range(1, len(subset))
     ]
 
     # Volume bar trace
     fig.add_trace(
         go.Bar(
-            x=stock_data.index[1:],
-            y=stock_data["Volume"][1:],
+            x=stock_data.tail(days).index[1:],
+            y=stock_data.tail(days)["Volume"][1:],
             marker_color=colors,
             name="Volume",
             showlegend=False,
@@ -219,14 +238,14 @@ def bollinger_candle(ticker_symbol, period, stock_data, window_size=20, num_std_
 
     # Customize the chart layout
     fig.update_layout(
-        title=f"{ticker_symbol} {period} Stock Price with Bollinger Bands",
+        title=f"{ticker_symbol} Stock Price with Bollinger Bands",
         # xaxis_title="Date",
         yaxis_title="Stock Price (USD)",
         xaxis_rangeslider_visible=False,
     )
 
     # Save the chart
-    filename = ticker_symbol + "_" + period + "_bollinger.png"
+    filename = f"{ticker_symbol}_{days}_bollinger.png"
     fig.write_image(filename)
 
 
@@ -336,11 +355,11 @@ def get_charts(ticker_symbol, start_date, end_date):
     # Candle 90 days
     ninety = stock_data.tail(90).copy()
     candle(ticker_symbol=ticker_symbol, period="90 Day", stock_data=ninety)
-    rsi(ticker_symbol=ticker_symbol, period="90 Day", stock_data=ninety)
-    macd(ticker_symbol=ticker_symbol, period="90 Day", stock_data=ninety)
+    rsi(ticker_symbol=ticker_symbol, days=90, stock_data=stock_data)
+    macd(ticker_symbol=ticker_symbol, days=90, stock_data=stock_data)
 
     # Bollinger & Candle 90 days
-    bollinger_candle(ticker_symbol=ticker_symbol, period="90 Day", stock_data=ninety)
+    bollinger_candle(ticker_symbol=ticker_symbol, days=90, stock_data=stock_data)
 
     # Candle 5 days
     five_day = stock_data.tail(5)
