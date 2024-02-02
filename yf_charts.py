@@ -3,6 +3,8 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
 import talib
+import pandas as pd
+import matplotlib.pyplot as plt
 
 
 # Plot the 50 and 200 day moving averages
@@ -343,7 +345,71 @@ def volume(ticker_symbol, period, stock_data):
     return fig
 
 
+def news(ticker_symbol, yf_stock):
+    news = yf_stock.news
+    newsfile = open(f"{ticker_symbol}_news.txt", "w")
+    narration = open(f"{ticker_symbol}_news_narration.txt", "w")
+    for n in news:
+        title = n["title"]
+        publisher = n["publisher"]
+        when = datetime.fromtimestamp(n["providerPublishTime"])
+        date_str = when.strftime("%H:%M %m/%d/%Y")
+
+        print(f"'{title}' - {publisher} @ {date_str} GMT ", file=newsfile)
+        print(f"{title}'", file=narration)
+
+
+def plot_dataframe(ticker_symbol, df, x_column, y_column, title="Graph"):
+    # Convert the 'date' column to datetime if it's not already
+    if pd.api.types.is_datetime64_any_dtype(df[x_column]):
+        df[x_column] = pd.to_datetime(df[x_column])
+
+    # Sort the DataFrame by the 'date' column
+    df = df.sort_values(by=x_column)
+
+    # Plot the graph
+    plt.figure(figsize=(10, 6))
+    # plt.plot(df[x_column], df[y_column], marker=",", linestyle="solid", color="r")
+    plt.bar(df[x_column], df[y_column].div(1000), color="red", width=2.0)
+
+    # Customize the plot
+    plt.title(title)
+    # plt.xlabel("Time")
+    plt.ylabel("Shares(1000s)")
+    plt.grid(True)
+    # plt.show()
+
+    # Save the chart
+    filename = ticker_symbol + "_insider.png"
+    plt.savefig(filename)
+
+
+# https://pypi.org/project/yfinance/
+def insider(ticker_symbol, yf_stock):
+    df = yf_stock.insider_transactions
+    # Call the function to plot the graph
+    plot_dataframe(
+        ticker_symbol,
+        df,
+        x_column="Start Date",
+        y_column="Shares",
+        title="Insider Selling",
+    )
+
+
+# msft.recommendations
+# msft.recommendations_summary
+# msft.upgrades_downgrades
+def recommendations(ticker_symbol, yf_stock):
+    df = yf_stock.recommendations_summary
+
+
 def get_charts(ticker_symbol, start_date, end_date):
+    yf_stock = yf.Ticker(ticker_symbol)
+    insider(ticker_symbol, yf_stock)
+    exit(0)
+    news(ticker_symbol, yf_stock)
+
     # Fetch historical stock data
     stock_data = yf.download(ticker_symbol, start=start_date, end=end_date)
 
