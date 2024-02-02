@@ -5,6 +5,54 @@ from datetime import datetime, timedelta
 import talib
 
 
+def calculate_rsi(data):
+    # Calculate RSI
+    data["rsi"] = talib.RSI(data["Close"], timeperiod=14)
+    return data
+
+
+def rsi(ticker_symbol, period, stock_data):
+    data = calculate_rsi(data=stock_data)
+    fig = go.Figure()
+
+    # Plot RSI
+    fig.add_trace(go.Scatter(x=data.index, y=data["rsi"], mode="lines", name="RSI"))
+
+    # Add horizontal lines for overbought and oversold levels
+    fig.add_shape(
+        dict(
+            type="line",
+            x0=data.index.min(),
+            x1=data.index.max(),
+            y0=70,
+            y1=70,
+            line=dict(color="red"),
+            name="Overbought Level",
+        )
+    )
+    fig.add_shape(
+        dict(
+            type="line",
+            x0=data.index.min(),
+            x1=data.index.max(),
+            y0=30,
+            y1=30,
+            line=dict(color="green"),
+            name="Oversold Level",
+        )
+    )
+
+    fig.update_layout(
+        title=f"{ticker_symbol} {period} Relative Strength Indicator",  # xaxis_title="Date",
+        yaxis_title="RSI",
+        xaxis_rangeslider_visible=False,
+    )
+
+    # Save the chart
+    filename = ticker_symbol + "_" + period + "_rsi.png"
+    fig.write_image(filename)  # fig.show()
+
+
 def calculate_macd(stock_data):
     # Calculate MACD
     stock_data["macd"], stock_data["signal"], _ = talib.MACD(
@@ -239,6 +287,7 @@ def get_charts(ticker_symbol, start_date, end_date):
     # Candle 90 days
     ninety = stock_data.tail(90).copy()
     candle(ticker_symbol=ticker_symbol, period="90 Day", stock_data=ninety)
+    rsi(ticker_symbol=ticker_symbol, period="90 Day", stock_data=ninety)
     macd(ticker_symbol=ticker_symbol, period="90 Day", stock_data=ninety)
 
     # Bollinger & Candle 90 days
