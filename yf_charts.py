@@ -2,6 +2,43 @@ import yfinance as yf
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
+import talib
+
+
+def calculate_macd(stock_data):
+    # Calculate MACD
+    stock_data["macd"], stock_data["signal"], _ = talib.MACD(
+        stock_data["Close"], fastperiod=12, slowperiod=26, signalperiod=9
+    )
+    return stock_data
+
+
+def macd(ticker_symbol, period, stock_data):
+    data = calculate_macd(stock_data)
+
+    fig = go.Figure()
+
+    # Plot MACD and Signal lines
+    fig.add_trace(go.Scatter(x=data.index, y=data["macd"], mode="lines", name="MACD"))
+    fig.add_trace(
+        go.Scatter(x=data.index, y=data["signal"], mode="lines", name="Signal Line")
+    )
+
+    # Plot histogram for MACD
+    fig.add_trace(
+        go.Bar(x=data.index, y=data["macd"] - data["signal"], name="MACD Histogram")
+    )
+
+    fig.update_layout(
+        title=f"{ticker_symbol} Moving Average Convergence/Divergence",
+        # xaxis_title="Date",
+        yaxis_title="MACD",
+        xaxis_rangeslider_visible=False,
+    )
+
+    # Save the chart
+    filename = ticker_symbol + "_" + period + "_macd.png"
+    fig.write_image(filename)  # fig.show()
 
 
 def bollinger_candle(ticker_symbol, period, stock_data, window_size=20, num_std_dev=2):
@@ -116,6 +153,7 @@ def candle(ticker_symbol, period, stock_data):
             high=stock_data["High"],
             low=stock_data["Low"],
             close=stock_data["Close"],
+            showlegend=False,
         ),
         row=1,
         col=1,
@@ -136,6 +174,7 @@ def candle(ticker_symbol, period, stock_data):
             y=stock_data["Volume"][1:],
             marker_color=colors,
             name="Volume",
+            showlegend=False,
         ),
         row=2,
         col=1,
@@ -196,20 +235,18 @@ def get_charts(ticker_symbol, start_date, end_date):
 
     # Candle 5 year
     candle(ticker_symbol=ticker_symbol, period="5 Year", stock_data=stock_data)
-    # volume(ticker_symbol=ticker_symbol, period="5 Year", stock_data=stock_data)
 
     # Candle 90 days
     ninety = stock_data.tail(90).copy()
     candle(ticker_symbol=ticker_symbol, period="90 Day", stock_data=ninety)
-    # volume(ticker_symbol=ticker_symbol, period="90 Day", stock_data=ninety)
+    macd(ticker_symbol=ticker_symbol, period="90 Day", stock_data=ninety)
 
     # Bollinger & Candle 90 days
     bollinger_candle(ticker_symbol=ticker_symbol, period="90 Day", stock_data=ninety)
 
     # Candle 5 days
-    five_day = stock_data.tail(90)
+    five_day = stock_data.tail(5)
     candle(ticker_symbol=ticker_symbol, period="5 Day", stock_data=five_day)
-    # volume(ticker_symbol=ticker_symbol, period="5 Day", stock_data=five_day)
 
 
 # Set the ticker symbol, start date, and end date
