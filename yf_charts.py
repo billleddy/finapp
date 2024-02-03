@@ -397,17 +397,54 @@ def insider(ticker_symbol, yf_stock):
     )
 
 
+def create_table_image(df, filename="table_image.png"):
+    head_rows = df.head(12)  # df could be very long we only want the latest
+    # plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(6, 3.0))
+    ax = plt.subplot(111, frame_on=False)
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
+
+    table_data = []
+
+    for i, (index, row) in enumerate(head_rows.iterrows()):
+        table_data.append(
+            [
+                index.strftime("%Y-%m-%d"),
+                row["Firm"],
+                row["ToGrade"],
+                row["FromGrade"],
+                row["Action"],
+            ]
+        )
+    colLabels = ["Date", "Firm", "New Grade", "Prev Grade", "Action"]
+    table = plt.table(
+        cellText=table_data,
+        colLabels=colLabels,  # head_rows.columns,
+        cellLoc="center",
+        loc="center",
+        colColours=["#f0f0f0"] * len(colLabels),
+        cellColours=[["#f0f0f0", "#f0f0f0", "#f0f0f0", "#f0f0f0", "#f0f0f0"]]
+        * len(head_rows),
+        # colWidth=[0.2, 0.2, 0.2, 0.2],
+    )
+
+    plt.savefig(filename, bbox_inches="tight", pad_inches=0.05)
+
+
 # msft.recommendations
 # msft.recommendations_summary
 # msft.upgrades_downgrades
-def recommendations(ticker_symbol, yf_stock):
-    df = yf_stock.recommendations_summary
+def up_downgrades(ticker_symbol, yf_stock):
+    df = yf_stock.upgrades_downgrades
+    create_table_image(df, f"{ticker_symbol}_up_down.png")
 
 
 def get_charts(ticker_symbol, start_date, end_date):
     yf_stock = yf.Ticker(ticker_symbol)
-    insider(ticker_symbol, yf_stock)
+    up_downgrades(ticker_symbol, yf_stock)
     exit(0)
+    insider(ticker_symbol, yf_stock)
     news(ticker_symbol, yf_stock)
 
     # Fetch historical stock data
