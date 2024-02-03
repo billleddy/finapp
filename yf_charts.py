@@ -401,13 +401,34 @@ def create_table_image(df, filename="table_image.png"):
     head_rows = df.head(12)  # df could be very long we only want the latest
     # plt.figure(figsize=(8, 6))
     plt.figure(figsize=(6, 3.0))
+    fig = plt.gcf()
+
+    # Set the background color
+    fig.set_facecolor("#37474f")
+
     ax = plt.subplot(111, frame_on=False)
     ax.xaxis.set_visible(False)
     ax.yaxis.set_visible(False)
 
     table_data = []
-
+    cell_colors = []
     for i, (index, row) in enumerate(head_rows.iterrows()):
+        if row["Action"] == "down":
+            action_color = "red"
+        elif row["Action"] == "up":
+            action_color = "#7fff7f"  # "green"
+        else:
+            action_color = "#f0f0f0"
+
+        if row["ToGrade"] == "Sell":
+            grade_color = "red"
+        elif row["ToGrade"] == "Outperform":
+            grade_color = "#7fff7f"  # "green"
+        elif row["ToGrade"] == "Underweight":
+            grade_color = "yellow"
+        else:
+            grade_color = "#f0f0f0"
+        cell_colors.append(["#f0f0f0", "#f0f0f0", grade_color, "#f0f0f0", action_color])
         table_data.append(
             [
                 index.strftime("%Y-%m-%d"),
@@ -417,6 +438,7 @@ def create_table_image(df, filename="table_image.png"):
                 row["Action"],
             ]
         )
+
     colLabels = ["Date", "Firm", "New Grade", "Prev Grade", "Action"]
     table = plt.table(
         cellText=table_data,
@@ -424,8 +446,8 @@ def create_table_image(df, filename="table_image.png"):
         cellLoc="center",
         loc="center",
         colColours=["#f0f0f0"] * len(colLabels),
-        cellColours=[["#f0f0f0", "#f0f0f0", "#f0f0f0", "#f0f0f0", "#f0f0f0"]]
-        * len(head_rows),
+        # cellColours=[["#f0f0f0", "#f0f0f0", "#f0f0f0", "#f0f0f0", "#f0f0f0"]]
+        cellColours=cell_colors,
         # colWidth=[0.2, 0.2, 0.2, 0.2],
     )
 
