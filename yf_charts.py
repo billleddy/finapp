@@ -2,6 +2,7 @@ import yfinance as yf
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
+from dateutil import relativedelta
 import talib
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -397,9 +398,9 @@ def insider(ticker_symbol, yf_stock):
     )
 
 
-def create_table_image(df, filename="table_image.png"):
+def up_downgrades(ticker_symbol, yf_stock):
+    df = yf_stock.upgrades_downgrades
     head_rows = df.head(12)  # df could be very long we only want the latest
-    # plt.figure(figsize=(8, 6))
     plt.figure(figsize=(6, 3.0))
     fig = plt.gcf()
 
@@ -451,21 +452,81 @@ def create_table_image(df, filename="table_image.png"):
         # colWidth=[0.2, 0.2, 0.2, 0.2],
     )
 
-    plt.savefig(filename, bbox_inches="tight", pad_inches=0.05)
+    plt.savefig(f"{ticker_symbol}_up_down.png", bbox_inches="tight", pad_inches=0.05)
 
 
 # msft.recommendations
 # msft.recommendations_summary
 # msft.upgrades_downgrades
-def up_downgrades(ticker_symbol, yf_stock):
-    df = yf_stock.upgrades_downgrades
-    create_table_image(df, f"{ticker_symbol}_up_down.png")
+
+
+# turn "0m,-3m,-6m,-9m" into Nov, Aug...
+def get_month(delta):
+    months = 0
+    if delta.find("1") >= 0:
+        months = 1
+    elif delta.find("2") >= 0:
+        months = 2
+    elif delta.find("3") >= 0:
+        months = 3
+
+    then = datetime.now() - relativedelta.relativedelta(months=months)
+
+    # Get the three-letter name of the month
+    month_name = then.strftime("%b")
+    return month_name
+
+
+def recommendations(ticker_symbol, yf_stock):
+    df = yf_stock.recommendations  # same as recommendations_summary?
+    plt.figure(figsize=(6, 1.5))
+    fig = plt.gcf()
+
+    # Set the background color
+    fig.set_facecolor("#37474f")
+
+    ax = plt.subplot(111, frame_on=False)
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
+
+    # modify the period to show the month
+    df["when"] = df["period"].apply(get_month)
+
+    table_data = []
+    for i, (index, row) in enumerate(df.iterrows()):
+        table_data.append(
+            [
+                row["when"],
+                row["strongBuy"],
+                row["buy"],
+                row["hold"],
+                row["sell"],
+                row["strongSell"],
+            ]
+        )
+
+    colLabels = ["When", "Strong Buy", "Buy", "Hold", "Sell", "Strong Sell"]
+    table = plt.table(
+        cellText=table_data,
+        colLabels=colLabels,  # head_rows.columns,
+        cellLoc="center",
+        loc="center",
+        colColours=["#f0f0f0"] * len(colLabels),
+        cellColours=[["#f0f0f0", "#f0f0f0", "#f0f0f0", "#f0f0f0", "#f0f0f0", "#f0f0f0"]]
+        * len(df),
+    )
+
+    plt.savefig(
+        f"{ticker_symbol}_recommendations.png", bbox_inches="tight", pad_inches=0.05
+    )
 
 
 def get_charts(ticker_symbol, start_date, end_date):
     yf_stock = yf.Ticker(ticker_symbol)
-    up_downgrades(ticker_symbol, yf_stock)
+    recommendations(ticker_symbol, yf_stock)
+
     exit(0)
+    up_downgrades(ticker_symbol, yf_stock)
     insider(ticker_symbol, yf_stock)
     news(ticker_symbol, yf_stock)
 
