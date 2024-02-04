@@ -7,6 +7,8 @@ import talib
 import pandas as pd
 import matplotlib.pyplot as plt
 
+narration = {}  # narration per slide type
+
 
 # Plot the 50 and 200 day moving averages
 def moving_averages(ticker_symbol, days, data):
@@ -521,11 +523,94 @@ def recommendations(ticker_symbol, yf_stock):
     )
 
 
+def format_date_with_suffix(date):
+    day = date.day
+    if 10 <= day % 100 <= 20:
+        suffix = "th"
+    else:
+        suffix = {1: "st", 2: "nd", 3: "rd"}.get(day % 10, "th")
+    return date.strftime(f"%B {day}{suffix}")  # , %Y")
+
+
+def dollars_to_words(val):
+    rv = ""
+    if val >= 1:
+        v = int(val)
+        if v == 1:
+            rv += "one dollar and "
+        else:
+            rv += f"{v} dollars and "
+    cents = int((val * 100) % 100)
+    if cents == 1:
+        rv += "one cent"
+    else:
+        rv += f"{cents} cents"
+    return rv
+
+
+def earnings(ticker_symbol, yf_stock):
+    df = yf_stock.earnings_dates
+    plt.figure(figsize=(6, 2.3))
+    fig = plt.gcf()
+
+    # Set the background color
+    fig.set_facecolor("#37474f")
+
+    ax = plt.subplot(111, frame_on=False)
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
+
+    # remove future EPS dates that have Reported = NaN
+    # find the first row with an Estimate
+    # Find the index of the first non-NaN value in the specified column
+    date = df["EPS Estimate"].first_valid_index()
+    earnings_day = format_date_with_suffix(date)
+    estval = df.at[date, "EPS Estimate"]  # TODO handle dollars
+    estimate = dollars_to_words(estval)
+    narration[
+        "EPS"
+    ] = f"Next earnings will report on {earnings_day} with an current estimate of {estimate}. "
+    print(narration["EPS"])
+    df_rows = df.dropna(subset=["Reported EPS"])
+    table_data = []
+    cell_colors = []
+    for i, (index, row) in enumerate(df_rows.iterrows()):
+        if row["Surprise(%)"] < -0.01:
+            surprise_color = "red"
+        elif row["Surprise(%)"] > 0.1:
+            surprise_color = "#7fff7f"  # "green"
+        else:
+            surprise_color = "#f0f0f0"
+
+        cell_colors.append(["#f0f0f0", "#f0f0f0", "#f0f0f0", surprise_color])
+        table_data.append(
+            [
+                index.strftime("%Y-%m-%d"),
+                row["EPS Estimate"],
+                row["Reported EPS"],
+                row["Surprise(%)"],
+            ]
+        )
+
+    colLabels = ["Date", "Estimate", "Reported", "Surprise(%)"]
+    table = plt.table(
+        cellText=table_data,
+        colLabels=colLabels,
+        cellLoc="center",
+        loc="center",
+        colColours=["#f0f0f0"] * len(colLabels),
+        cellColours=cell_colors,
+    )
+
+    plt.savefig(f"{ticker_symbol}_earnings.png", bbox_inches="tight", pad_inches=0.05)
+
+
 def get_charts(ticker_symbol, start_date, end_date):
     yf_stock = yf.Ticker(ticker_symbol)
-    recommendations(ticker_symbol, yf_stock)
+    earnings(ticker_symbol, yf_stock)
 
     exit(0)
+    recommendations(ticker_symbol, yf_stock)
     up_downgrades(ticker_symbol, yf_stock)
     insider(ticker_symbol, yf_stock)
     news(ticker_symbol, yf_stock)
