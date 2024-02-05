@@ -6,8 +6,9 @@ from dateutil import relativedelta
 import talib
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
 
-narration = {}  # narration per slide type
+narration = {}  # narration slide type
 
 
 # Plot the 50 and 200 day moving averages
@@ -53,7 +54,7 @@ def moving_averages(ticker_symbol, days, data):
     )
 
     # Save the chart
-    filename = f"{ticker_symbol}_{days}_ma.png"
+    filename = f"{ticker_symbol}/{days}_ma.png"
     fig.write_image(filename)  # fig.show()
 
 
@@ -105,7 +106,7 @@ def rsi(ticker_symbol, days, stock_data):
     )
 
     # Save the chart
-    filename = f"{ticker_symbol}_{days}_rsi.png"
+    filename = f"{ticker_symbol}/{days}_rsi.png"
     fig.write_image(filename)  # fig.show()
 
 
@@ -157,7 +158,7 @@ def macd(ticker_symbol, days, stock_data):
     )
 
     # Save the chart
-    filename = f"{ticker_symbol}_{days}_macd.png"
+    filename = f"{ticker_symbol}/{days}_macd.png"
     fig.write_image(filename)  # fig.show()
 
 
@@ -250,7 +251,7 @@ def bollinger_candle(ticker_symbol, days, stock_data, window_size=20, num_std_de
     )
 
     # Save the chart
-    filename = f"{ticker_symbol}_{days}_bollinger.png"
+    filename = f"{ticker_symbol}/{days}_bollinger.png"
     fig.write_image(filename)
 
 
@@ -308,7 +309,7 @@ def candle(ticker_symbol, period, stock_data):
     )
 
     # Save the chart
-    filename = ticker_symbol + "_" + period + "_candle.png"
+    filename = ticker_symbol + "/" + period + "_candle.png"
     fig.write_image(filename)  # fig.show()
 
 
@@ -383,7 +384,7 @@ def plot_dataframe(ticker_symbol, df, x_column, y_column, title="Graph"):
     # plt.show()
 
     # Save the chart
-    filename = ticker_symbol + "_insider.png"
+    filename = ticker_symbol + "/insider.png"
     plt.savefig(filename)
 
 
@@ -454,7 +455,7 @@ def up_downgrades(ticker_symbol, yf_stock):
         # colWidth=[0.2, 0.2, 0.2, 0.2],
     )
 
-    plt.savefig(f"{ticker_symbol}_up_down.png", bbox_inches="tight", pad_inches=0.05)
+    plt.savefig(f"{ticker_symbol}/up_down.png", bbox_inches="tight", pad_inches=0.05)
 
 
 # msft.recommendations
@@ -519,7 +520,7 @@ def recommendations(ticker_symbol, yf_stock):
     )
 
     plt.savefig(
-        f"{ticker_symbol}_recommendations.png", bbox_inches="tight", pad_inches=0.05
+        f"{ticker_symbol}/recommendations.png", bbox_inches="tight", pad_inches=0.05
     )
 
 
@@ -569,7 +570,7 @@ def earnings(ticker_symbol, yf_stock):
     estimate = dollars_to_words(estval)
     narration[
         "EPS"
-    ] = f"Next earnings will report on {earnings_day} with an current estimate of {estimate}. "
+    ] = f"Next earnings will report on {earnings_day} with a current estimate of {estimate}. "
     print(narration["EPS"])
     df_rows = df.dropna(subset=["Reported EPS"])
     table_data = []
@@ -602,14 +603,24 @@ def earnings(ticker_symbol, yf_stock):
         cellColours=cell_colors,
     )
 
-    plt.savefig(f"{ticker_symbol}_earnings.png", bbox_inches="tight", pad_inches=0.05)
+    plt.savefig(f"{ticker_symbol}/earnings.png", bbox_inches="tight", pad_inches=0.05)
+
+
+def options(ticker_symbol, yf_stock):
+    print("Options does not seem to return anything so don't call this function")
+
+
+def default_narration(company, ticker_symbol, today_date):
+    narration[
+        "summary"
+    ] = "So is it time to buy or hold or sell {company}?\nPause:0.75\nOr maybe just run away?"
 
 
 def get_charts(ticker_symbol, start_date, end_date):
+    os.makedirs(ticker_symbol, exist_ok=True)
     yf_stock = yf.Ticker(ticker_symbol)
+    options(ticker_symbol, yf_stock)
     earnings(ticker_symbol, yf_stock)
-
-    exit(0)
     recommendations(ticker_symbol, yf_stock)
     up_downgrades(ticker_symbol, yf_stock)
     insider(ticker_symbol, yf_stock)
@@ -637,11 +648,19 @@ def get_charts(ticker_symbol, start_date, end_date):
     candle(ticker_symbol=ticker_symbol, period="5 Day", stock_data=five_day)
 
 
-# Set the ticker symbol, start date, and end date
-symbol = "TSLA"
+def main():
+    # Set the ticker symbol, start date, and end date
+    symbol = "TSLA"
+    company = "Tesla"
 
-today_date = datetime.now().date()
-five_years = (datetime.now() - timedelta(days=365 * 5)).date()
+    today_date = datetime.now().date()
+    five_years = (datetime.now() - timedelta(days=365 * 5)).date()
 
-# Plot the candlestick chart
-get_charts(symbol, five_years, today_date)
+    # Initialize the relatively static narration
+    default_narration(company, symbol, today_date)
+    # Plot the candlestick chart
+    get_charts(symbol, five_years, today_date)
+
+
+if __name__ == "__main__":
+    main()
