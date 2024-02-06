@@ -6,7 +6,7 @@ import configparser
 import os
 import shutil
 import zipfile
-from yf_charts import default_narration, get_charts
+from yf_charts import default_narration, get_charts, narration
 from screen import get_url
 
 image_clips = []
@@ -20,6 +20,7 @@ notes_dir = "temp/ppt/notesSlides/"
 notes_mp4_folder = "temp/notes_mp4"
 media = "temp/ppt/media/"
 
+# "This is a review of {company} and its financial outlook using publicly available data, some AI interpretation of that data and random commentary."
 
 page_map = {
     "title": "slide1",
@@ -27,32 +28,21 @@ page_map = {
     "overview": "slide3",
     "long_term_chart": "slide4",
     "headlines": "slide7",
-}
-narration = {
-    "Headline1": "First headline",
-    "Headline2": "Second longer line from some article",
-    "Headline3": "Third",
-    "Headline4": "Fourth 4444444 4  4 4 4 4 4  4 4 4 4  4 4 ",
-    "Headline5": "Five",
-    "Headline6": "Six",
-    "Headline7": "Seven",
-    "Headline8": "Eight",
+    "EPS": "slide10",
 }
 
 image_map = {
     "logo": "image1.png",
-    "recommendations": "image2.png",
+    "recommendations": "image3.png",
     "up_down": "image3.png",
-    "earnings": "image4.png",
-    "90_bollinger": "image5.png",
-    "90_rsi": "image6.png",
-    "homepage": "image7.png",
-    "90_macd": "image8.png",
-    "insider": "image9.png",
-    "5 Day_candle": "image10.png",
-    "365_ma": "image11.png",
-    "90 Day_candle": "image12.png",
-    "5 Year_candle": "image13.png",
+    "earnings": "image5.png",
+    "90_bollinger": "image6.png",
+    "90_rsi": "image9.png",
+    "homepage": "image3.png",
+    "90_macd": "image12.png",
+    "insider": "image11.png",
+    "5 Day_candle": "image8.png",
+    "5 Year_candle": "image10.png",
 }
 
 
@@ -88,6 +78,28 @@ def zip_ppt(temp_folder, output_file):
                 zip_ref.write(file_path, arcname)
 
 
+def update_narration(slidename, str):
+    filename = notes_dir + slidename.replace("slide", "notesSlide") + ".xml"
+    try:
+        # Open the file in read mode
+        with open(filename, "r") as file:
+            # Read the content of the file
+            content = file.read()
+
+        # Replace '_narration_' with the str
+        updated = content.replace("_narration_", str)
+
+        # Open the file in write mode to overwrite
+        with open(filename, "w") as file:
+            # Write the updated content back to the file
+            file.write(updated)
+
+    except FileNotFoundError:
+        print(f"File '{filename}' not found.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
 def title(company, ticker_symbol):
     filename = slide_dir + page_map["title"] + ".xml"
     try:
@@ -107,12 +119,39 @@ def title(company, ticker_symbol):
             # Write the updated content back to the file
             file.write(updated)
 
-        print(f"Replacement successful. '{filename}' has been updated.")
+    except FileNotFoundError:
+        print(f"File '{filename}' not found.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+    update_narration(
+        page_map["title"],
+        f"This is a review of {company} and its financial outlook using publicly available data, some AI interpretation of that data and random commentary.",
+    )
+
+
+def eps(company, ticker_symbol):
+    filename = slide_dir + page_map["EPS"] + ".xml"
+    try:
+        # Open the file in read mode
+        with open(filename, "r") as file:
+            # Read the content of the file
+            content = file.read()
+
+        # Replace Tagline
+        global config
+        updated = content.replace("Next_EPS", narration["next_EPS"])
+
+        # Open the file in write mode to overwrite
+        with open(filename, "w") as file:
+            # Write the updated content back to the file
+            file.write(updated)
 
     except FileNotFoundError:
         print(f"File '{filename}' not found.")
     except Exception as e:
         print(f"An error occurred: {e}")
+    update_narration(page_map["EPS"], narration["EPS"])
 
 
 def overview(company, ticker_symbol):
@@ -125,15 +164,12 @@ def overview(company, ticker_symbol):
 
         # Replace Tagline
         global config
-        t = config["tagline"]
         updated = content.replace("Tagline", config["tagline"])
 
         # Open the file in write mode to overwrite
         with open(filename, "w") as file:
             # Write the updated content back to the file
             file.write(updated)
-
-        print(f"Replacement successful. '{filename}' has been updated.")
 
     except FileNotFoundError:
         print(f"File '{filename}' not found.")
@@ -142,10 +178,11 @@ def overview(company, ticker_symbol):
 
 
 def headlines(company, ticker_symbol):
-    filename = slide_dir + page_map["headlines"] + ".xml"
+    global narration
+    slidename = slide_dir + page_map["headlines"] + ".xml"
     try:
         # Open the file in read mode
-        with open(filename, "r") as file:
+        with open(slidename, "r") as file:
             # Read the content of the file
             content = file.read()
 
@@ -158,16 +195,16 @@ def headlines(company, ticker_symbol):
             i += 1
 
         # Open the file in write mode to overwrite
-        with open(filename, "w") as file:
+        with open(slidename, "w") as file:
             # Write the updated content back to the file
             file.write(content)
 
-        print(f"Replacement successful. '{filename}' has been updated.")
-
     except FileNotFoundError:
-        print(f"File '{filename}' not found.")
+        print(f"File '{slidename}' not found.")
     except Exception as e:
         print(f"An error occurred: {e}")
+
+    update_narration(page_map["headlines"], narration["Headlines"])
 
 
 def get_logo(ticker_symbol):
@@ -214,6 +251,8 @@ def main():
     ticker_symbol = config["ticker"]
     url = config["url"]
 
+    os.makedirs(ticker_symbol, exist_ok=True)
+
     get_logo(ticker_symbol)
 
     # Create the charts
@@ -231,6 +270,7 @@ def main():
     title(company, ticker_symbol)
     overview(company, ticker_symbol)
     headlines(company, ticker_symbol)
+    eps(company, ticker_symbol)
     replace_images(company, ticker_symbol)
 
     zip_ppt("temp", f"{ticker_symbol}.pptx")

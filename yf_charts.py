@@ -225,7 +225,7 @@ def bollinger_candle(ticker_symbol, days, stock_data, window_size=20, num_std_de
     # Color volume bars based on up or down day
     subset = stock_data.tail(days)
     colors = [
-        "green" if subset["Close"].iloc[i] >= subset["Close"].iloc[i - 1] else "red"
+        "green" if subset["Close"].iloc[i] >= subset["Open"].iloc[i] else "red"
         for i in range(1, len(subset))
     ]
 
@@ -281,9 +281,7 @@ def candle(ticker_symbol, period, stock_data):
 
     # Color volume bars based on up or down day
     colors = [
-        "green"
-        if stock_data["Close"].iloc[i] >= stock_data["Close"].iloc[i - 1]
-        else "red"
+        "green" if stock_data["Close"].iloc[i] >= stock_data["Open"].iloc[i] else "red"
         for i in range(1, len(stock_data))
     ]
 
@@ -318,9 +316,7 @@ def volume(ticker_symbol, period, stock_data):
 
     # Color volume bars based on up or down day
     colors = [
-        "green"
-        if stock_data["Close"].iloc[i] >= stock_data["Close"].iloc[i - 1]
-        else "red"
+        "green" if stock_data["Close"].iloc[i] >= stock_data["Open"].iloc[i] else "red"
         for i in range(1, len(stock_data))
     ]
 
@@ -351,16 +347,18 @@ def volume(ticker_symbol, period, stock_data):
 
 def news(ticker_symbol, yf_stock):
     news = yf_stock.news
-    newsfile = open(f"{ticker_symbol}_news.txt", "w")
-    narration = open(f"{ticker_symbol}_news_narration.txt", "w")
+    headlines = ""
+    i = 1
     for n in news:
         title = n["title"]
         publisher = n["publisher"]
         when = datetime.fromtimestamp(n["providerPublishTime"])
         date_str = when.strftime("%H:%M %m/%d/%Y")
+        headlines += f"{title}\nPause:0.5\n"
 
-        print(f"'{title}' - {publisher} @ {date_str} GMT ", file=newsfile)
-        print(f"{title}'", file=narration)
+        narration[f"Headline{i}"] = f"'{title}' - {publisher} @ {date_str} GMT "
+        i += 1
+    narration["Headlines"] = headlines
 
 
 def plot_dataframe(ticker_symbol, df, x_column, y_column, title="Graph"):
@@ -568,10 +566,10 @@ def earnings(ticker_symbol, yf_stock):
     earnings_day = format_date_with_suffix(date)
     estval = df.at[date, "EPS Estimate"]  # TODO handle dollars
     estimate = dollars_to_words(estval)
+    narration["next_EPS"] = "Next: " + date.strftime("%m/%d/%y")
     narration[
         "EPS"
     ] = f"Next earnings will report on {earnings_day} with a current estimate of {estimate}. "
-    print(narration["EPS"])
     df_rows = df.dropna(subset=["Reported EPS"])
     table_data = []
     cell_colors = []
