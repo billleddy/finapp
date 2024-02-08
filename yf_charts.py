@@ -47,7 +47,7 @@ def moving_averages(ticker_symbol, days, data):
     )
 
     fig.update_layout(
-        title="TSLA Stock Prices with Moving Averages",
+        title=f"{ticker_symbol} 50 & 200 Day Moving Averages",
         xaxis_title="Date",
         yaxis_title="Stock Price (USD)",
         xaxis_rangeslider_visible=False,
@@ -274,16 +274,27 @@ def candle(ticker_symbol, period, stock_data):
             low=stock_data["Low"],
             close=stock_data["Close"],
             showlegend=False,
+            increasing=dict(line=dict(color="chartreuse")),
+            decreasing=dict(line=dict(color="red")),
         ),
         row=1,
         col=1,
     )
-
     # Color volume bars based on up or down day
     colors = [
-        "green" if stock_data["Close"].iloc[i] >= stock_data["Open"].iloc[i] else "red"
+        (
+            "chartreuse"
+            if stock_data["Close"].iloc[i] >= stock_data["Close"].iloc[i - 1]
+            else "red"
+        )
         for i in range(1, len(stock_data))
     ]
+
+    fig.update_layout(
+        paper_bgcolor="black",
+        plot_bgcolor="black",
+        font=dict(color="lavender"),
+    )
 
     # Volume bar trace
     fig.add_trace(
@@ -567,9 +578,9 @@ def earnings(ticker_symbol, yf_stock):
     estval = df.at[date, "EPS Estimate"]  # TODO handle dollars
     estimate = dollars_to_words(estval)
     narration["next_EPS"] = "Next: " + date.strftime("%m/%d/%y")
-    narration[
-        "EPS"
-    ] = f"Next earnings will report on {earnings_day} with a current estimate of {estimate}. "
+    narration["EPS"] = (
+        f"Next earnings will report on {earnings_day} with a current estimate of {estimate}. "
+    )
     df_rows = df.dropna(subset=["Reported EPS"])
     table_data = []
     cell_colors = []
@@ -609,27 +620,27 @@ def options(ticker_symbol, yf_stock):
 
 
 def default_narration(company, ticker_symbol, today_date):
-    narration[
-        "summary"
-    ] = "So is it time to buy or hold or sell {company}?\nPause:0.75\nOr maybe just run away?"
+    narration["summary"] = (
+        "So is it time to buy or hold or sell {company}?\nPause:0.75\nOr maybe just run away?"
+    )
 
 
 def get_charts(ticker_symbol, start_date, end_date):
     os.makedirs(ticker_symbol, exist_ok=True)
     yf_stock = yf.Ticker(ticker_symbol)
-    options(ticker_symbol, yf_stock)
-    earnings(ticker_symbol, yf_stock)
-    recommendations(ticker_symbol, yf_stock)
-    up_downgrades(ticker_symbol, yf_stock)
-    insider(ticker_symbol, yf_stock)
-    news(ticker_symbol, yf_stock)
 
     # Fetch historical stock data
     stock_data = yf.download(ticker_symbol, start=start_date, end=end_date)
 
+    # test
+    ninety = stock_data.tail(90).copy()
+    candle(ticker_symbol=ticker_symbol, period="90 Day", stock_data=ninety)
+    exit(0)
+    # test
+
     # Candle 5 year
     candle(ticker_symbol=ticker_symbol, period="5 Year", stock_data=stock_data)
-
+    exit(0)
     moving_averages(ticker_symbol=ticker_symbol, days=365, data=stock_data)
 
     # Candle 90 days
@@ -642,8 +653,16 @@ def get_charts(ticker_symbol, start_date, end_date):
     bollinger_candle(ticker_symbol=ticker_symbol, days=90, stock_data=stock_data)
 
     # Candle 5 days
+    # TODO - missing first day of volume because its color is based on prev day
     five_day = stock_data.tail(5)
     candle(ticker_symbol=ticker_symbol, period="5 Day", stock_data=five_day)
+
+    options(ticker_symbol, yf_stock)
+    earnings(ticker_symbol, yf_stock)
+    recommendations(ticker_symbol, yf_stock)
+    up_downgrades(ticker_symbol, yf_stock)
+    insider(ticker_symbol, yf_stock)
+    news(ticker_symbol, yf_stock)
 
 
 def main():

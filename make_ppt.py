@@ -32,17 +32,19 @@ page_map = {
 }
 
 image_map = {
-    "logo": "image1.png",
-    "recommendations": "image3.png",
-    "up_down": "image3.png",
-    "earnings": "image5.png",
-    "90_bollinger": "image6.png",
-    "90_rsi": "image9.png",
-    "homepage": "image3.png",
-    "90_macd": "image12.png",
-    "insider": "image11.png",
-    "5 Day_candle": "image8.png",
-    "5 Year_candle": "image10.png",
+    "logo": "image3.png",
+    "recommendations": "image11.png",
+    "90 Day_candle": "image10.png",
+    "up_down": "image8.png",
+    "earnings": "image2.png",
+    "90_bollinger": "image7.png",
+    "90_rsi": "image4.png",
+    "homepage": "image9.png",
+    "90_macd": "image5.png",
+    "insider": "image1.png",
+    "5 Day_candle": "image12.png",
+    "5 Year_candle": "image13.png",
+    "365_ma": "image6.png",
 }
 
 
