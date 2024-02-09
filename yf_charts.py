@@ -51,6 +51,8 @@ def moving_averages(ticker_symbol, days, data):
         xaxis_title="Date",
         yaxis_title="Stock Price (USD)",
         xaxis_rangeslider_visible=False,
+        paper_bgcolor="black",
+        plot_bgcolor="black",
     )
 
     # Save the chart
@@ -71,7 +73,11 @@ def rsi(ticker_symbol, days, stock_data):
     # Plot RSI
     fig.add_trace(
         go.Scatter(
-            x=data.tail(days).index, y=data["rsi"].tail(days), mode="lines", name="RSI"
+            x=data.tail(days).index,
+            y=data["rsi"].tail(days),
+            mode="lines",
+            name="RSI",
+            line=dict(color="cyan"),
         )
     )
 
@@ -83,8 +89,8 @@ def rsi(ticker_symbol, days, stock_data):
             x1=data.tail(days).index.max(),
             y0=70,
             y1=70,
-            line=dict(color="red"),
-            name="Overbought Level",
+            line=dict(color="fuchsia"),
+            name="Overbought",
         )
     )
     fig.add_shape(
@@ -94,8 +100,8 @@ def rsi(ticker_symbol, days, stock_data):
             x1=data.tail(days).index.max(),
             y0=30,
             y1=30,
-            line=dict(color="green"),
-            name="Oversold Level",
+            line=dict(color="chartreuse"),
+            name="Oversold",
         )
     )
 
@@ -103,6 +109,8 @@ def rsi(ticker_symbol, days, stock_data):
         title=f"{ticker_symbol} Relative Strength Indicator",  # xaxis_title="Date",
         yaxis_title="RSI",
         xaxis_rangeslider_visible=False,
+        paper_bgcolor="black",
+        plot_bgcolor="black",
     )
 
     # Save the chart
@@ -130,6 +138,7 @@ def macd(ticker_symbol, days, stock_data):
             y=data["macd"].tail(days),
             mode="lines",
             name="MACD",
+            line=dict(color="chartreuse"),
         )
     )
     fig.add_trace(
@@ -137,7 +146,8 @@ def macd(ticker_symbol, days, stock_data):
             x=data.tail(days).index,
             y=data["signal"].tail(days),
             mode="lines",
-            name="Signal Line",
+            name="Signal",
+            line=dict(color="fuchsia"),
         )
     )
 
@@ -147,6 +157,7 @@ def macd(ticker_symbol, days, stock_data):
             x=data.tail(days).index,
             y=data["macd"].tail(days) - data["signal"].tail(days),
             name="MACD Histogram",
+            marker=dict(color="blue"),
         )
     )
 
@@ -155,6 +166,8 @@ def macd(ticker_symbol, days, stock_data):
         # xaxis_title="Date",
         yaxis_title="MACD",
         xaxis_rangeslider_visible=False,
+        paper_bgcolor="black",
+        plot_bgcolor="black",
     )
 
     # Save the chart
@@ -192,12 +205,14 @@ def bollinger_candle(ticker_symbol, days, stock_data, window_size=20, num_std_de
                 close=stock_data["Close"].tail(days),
                 name="Candlesticks",
                 showlegend=False,
+                increasing=dict(line=dict(color="chartreuse")),
+                decreasing=dict(line=dict(color="red")),
             ),
             go.Scatter(
                 x=stock_data.tail(days).index,
                 y=stock_data["Upper"].tail(days),
                 mode="lines",
-                line=dict(color="red"),
+                line=dict(color="fuchsia"),
                 name="Upper Band",
                 showlegend=False,
             ),
@@ -205,7 +220,7 @@ def bollinger_candle(ticker_symbol, days, stock_data, window_size=20, num_std_de
                 x=stock_data.tail(days).index,
                 y=stock_data["MA"].tail(days),
                 mode="lines",
-                line=dict(color="black"),
+                line=dict(color="white"),
                 name="Moving Average",
                 showlegend=False,
             ),
@@ -213,7 +228,7 @@ def bollinger_candle(ticker_symbol, days, stock_data, window_size=20, num_std_de
                 x=stock_data.tail(days).index,
                 y=stock_data["Lower"].tail(days),
                 mode="lines",
-                line=dict(color="blue"),
+                line=dict(color="greenyellow"),
                 name="Lower Band",
                 showlegend=False,
             ),
@@ -225,7 +240,11 @@ def bollinger_candle(ticker_symbol, days, stock_data, window_size=20, num_std_de
     # Color volume bars based on up or down day
     subset = stock_data.tail(days)
     colors = [
-        "green" if subset["Close"].iloc[i] >= subset["Open"].iloc[i] else "red"
+        (
+            "chartreuse"
+            if subset["Close"].iloc[i] >= subset["Close"].iloc[i - 1]
+            else "red"
+        )
         for i in range(1, len(subset))
     ]
 
@@ -248,6 +267,9 @@ def bollinger_candle(ticker_symbol, days, stock_data, window_size=20, num_std_de
         # xaxis_title="Date",
         yaxis_title="Stock Price (USD)",
         xaxis_rangeslider_visible=False,
+        paper_bgcolor="black",
+        plot_bgcolor="black",
+        font=dict(color="lavender"),
     )
 
     # Save the chart
@@ -412,12 +434,15 @@ def insider(ticker_symbol, yf_stock):
 
 def up_downgrades(ticker_symbol, yf_stock):
     df = yf_stock.upgrades_downgrades
+    cell_color = "black"
     head_rows = df.head(12)  # df could be very long we only want the latest
+    plt.rcParams["text.color"] = "white"
     plt.figure(figsize=(6, 3.0))
     fig = plt.gcf()
 
     # Set the background color
-    fig.set_facecolor("#37474f")
+    fig.set_facecolor("black")
+    fig.set_edgecolor("blue")
 
     ax = plt.subplot(111, frame_on=False)
     ax.xaxis.set_visible(False)
@@ -431,7 +456,7 @@ def up_downgrades(ticker_symbol, yf_stock):
         elif row["Action"] == "up":
             action_color = "#7fff7f"  # "green"
         else:
-            action_color = "#f0f0f0"
+            action_color = cell_color
 
         if row["ToGrade"] == "Sell":
             grade_color = "red"
@@ -440,8 +465,11 @@ def up_downgrades(ticker_symbol, yf_stock):
         elif row["ToGrade"] == "Underweight":
             grade_color = "yellow"
         else:
-            grade_color = "#f0f0f0"
-        cell_colors.append(["#f0f0f0", "#f0f0f0", grade_color, "#f0f0f0", action_color])
+            grade_color = cell_color
+        cell_colors.append(
+            [cell_color, cell_color, grade_color, cell_color, action_color]
+        )
+
         table_data.append(
             [
                 index.strftime("%Y-%m-%d"),
@@ -458,11 +486,23 @@ def up_downgrades(ticker_symbol, yf_stock):
         colLabels=colLabels,  # head_rows.columns,
         cellLoc="center",
         loc="center",
-        colColours=["#f0f0f0"] * len(colLabels),
+        colColours=[cell_color] * len(colLabels),
         # cellColours=[["#f0f0f0", "#f0f0f0", "#f0f0f0", "#f0f0f0", "#f0f0f0"]]
         cellColours=cell_colors,
         # colWidth=[0.2, 0.2, 0.2, 0.2],
     )
+
+    for i, cell in enumerate(table.get_celld().values()):
+        c = i % len(colLabels)
+        r = int(i / len(colLabels))
+        if r >= len(cell_colors):
+            break
+        colors = cell_colors[r]
+        if colors[c] != "black":
+            # highlighted cell
+            cell.set_text_props(color="black")  # fontweight="bold",
+        else:
+            cell.set_text_props(color="white")
 
     plt.savefig(f"{ticker_symbol}/up_down.png", bbox_inches="tight", pad_inches=0.05)
 
@@ -633,8 +673,7 @@ def get_charts(ticker_symbol, start_date, end_date):
     stock_data = yf.download(ticker_symbol, start=start_date, end=end_date)
 
     # test
-    ninety = stock_data.tail(90).copy()
-    candle(ticker_symbol=ticker_symbol, period="90 Day", stock_data=ninety)
+    up_downgrades(ticker_symbol, yf_stock)
     exit(0)
     # test
 
