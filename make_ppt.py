@@ -31,20 +31,22 @@ page_map = {
     "EPS": "slide10",
 }
 
+# Whenever the Template.pptx gets updated, it seems that the image names
+# get shuffled so this mapping needs to be adjusted
 image_map = {
-    "logo": "image3.png",
-    "recommendations": "image11.png",
-    "90 Day_candle": "image10.png",
-    "up_down": "image8.png",
-    "earnings": "image2.png",
-    "90_bollinger": "image7.png",
-    "90_rsi": "image4.png",
-    "homepage": "image9.png",
-    "90_macd": "image5.png",
-    "insider": "image1.png",
-    "5 Day_candle": "image12.png",
-    "5 Year_candle": "image13.png",
-    "365_ma": "image6.png",
+    "logo": "image2.png",
+    "recommendations": "image4.png",
+    "90 Day_candle": "image7.png",
+    "up_down": "image5.png",
+    "earnings": "image8.png",
+    "90_bollinger": "image9.png",
+    "90_rsi": "image12.png",
+    "homepage": "image3.png",
+    "90_macd": "image11.png",
+    "insider": "image13.png",
+    "5 Day_candle": "image10.png",
+    "5 Year_candle": "image6.png",
+    "365_ma": "image14.png",
 }
 
 
