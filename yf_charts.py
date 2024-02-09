@@ -10,6 +10,10 @@ import os
 
 narration = {}  # narration slide type
 
+# default colors
+background = "black"
+textcolor = "white"
+
 
 # Plot the 50 and 200 day moving averages
 def moving_averages(ticker_symbol, days, data):
@@ -51,8 +55,8 @@ def moving_averages(ticker_symbol, days, data):
         xaxis_title="Date",
         yaxis_title="Stock Price (USD)",
         xaxis_rangeslider_visible=False,
-        paper_bgcolor="black",
-        plot_bgcolor="black",
+        paper_bgcolor=background,
+        plot_bgcolor=background,
     )
 
     # Save the chart
@@ -109,8 +113,8 @@ def rsi(ticker_symbol, days, stock_data):
         title=f"{ticker_symbol} Relative Strength Indicator",  # xaxis_title="Date",
         yaxis_title="RSI",
         xaxis_rangeslider_visible=False,
-        paper_bgcolor="black",
-        plot_bgcolor="black",
+        paper_bgcolor=background,
+        plot_bgcolor=background,
     )
 
     # Save the chart
@@ -166,8 +170,8 @@ def macd(ticker_symbol, days, stock_data):
         # xaxis_title="Date",
         yaxis_title="MACD",
         xaxis_rangeslider_visible=False,
-        paper_bgcolor="black",
-        plot_bgcolor="black",
+        paper_bgcolor=background,
+        plot_bgcolor=background,
     )
 
     # Save the chart
@@ -220,7 +224,7 @@ def bollinger_candle(ticker_symbol, days, stock_data, window_size=20, num_std_de
                 x=stock_data.tail(days).index,
                 y=stock_data["MA"].tail(days),
                 mode="lines",
-                line=dict(color="white"),
+                line=dict(color=textcolor),
                 name="Moving Average",
                 showlegend=False,
             ),
@@ -267,8 +271,8 @@ def bollinger_candle(ticker_symbol, days, stock_data, window_size=20, num_std_de
         # xaxis_title="Date",
         yaxis_title="Stock Price (USD)",
         xaxis_rangeslider_visible=False,
-        paper_bgcolor="black",
-        plot_bgcolor="black",
+        paper_bgcolor=background,
+        plot_bgcolor=background,
         font=dict(color="lavender"),
     )
 
@@ -313,8 +317,8 @@ def candle(ticker_symbol, period, stock_data):
     ]
 
     fig.update_layout(
-        paper_bgcolor="black",
-        plot_bgcolor="black",
+        paper_bgcolor=background,
+        plot_bgcolor=background,
         font=dict(color="lavender"),
     )
 
@@ -395,6 +399,8 @@ def news(ticker_symbol, yf_stock):
 
 
 def plot_dataframe(ticker_symbol, df, x_column, y_column, title="Graph"):
+    plt.rcParams["text.color"] = textcolor
+
     # Convert the 'date' column to datetime if it's not already
     if pd.api.types.is_datetime64_any_dtype(df[x_column]):
         df[x_column] = pd.to_datetime(df[x_column])
@@ -402,17 +408,25 @@ def plot_dataframe(ticker_symbol, df, x_column, y_column, title="Graph"):
     # Sort the DataFrame by the 'date' column
     df = df.sort_values(by=x_column)
 
-    # Plot the graph
-    plt.figure(figsize=(10, 6))
-    # plt.plot(df[x_column], df[y_column], marker=",", linestyle="solid", color="r")
-    plt.bar(df[x_column], df[y_column].div(1000), color="red", width=2.0)
+    # Create a bar chart
+    fig, ax = plt.subplots()
+    fig = plt.figure(figsize=(10, 6))
+    ax = fig.add_subplot(1, 1, 1)
+
+    # Set background color
+    fig.patch.set_facecolor(background)
+    ax.set_facecolor(background)
+
+    ax.bar(df[x_column], df[y_column].div(1000), color="fuchsia", width=4.0)
+
+    ax.xaxis.label.set_color(textcolor)
+    ax.yaxis.label.set_color(textcolor)
 
     # Customize the plot
     plt.title(title)
-    # plt.xlabel("Time")
+    plt.xlabel("Past 90 Days")
     plt.ylabel("Shares(1000s)")
     plt.grid(True)
-    # plt.show()
 
     # Save the chart
     filename = ticker_symbol + "/insider.png"
@@ -421,11 +435,14 @@ def plot_dataframe(ticker_symbol, df, x_column, y_column, title="Graph"):
 
 # https://pypi.org/project/yfinance/
 def insider(ticker_symbol, yf_stock):
+
     df = yf_stock.insider_transactions
+    ninety = df.tail(90).copy()
+
     # Call the function to plot the graph
     plot_dataframe(
         ticker_symbol,
-        df,
+        ninety,
         x_column="Start Date",
         y_column="Shares",
         title="Insider Selling",
@@ -434,15 +451,15 @@ def insider(ticker_symbol, yf_stock):
 
 def up_downgrades(ticker_symbol, yf_stock):
     df = yf_stock.upgrades_downgrades
-    cell_color = "black"
+    cell_color = background
     head_rows = df.head(12)  # df could be very long we only want the latest
-    plt.rcParams["text.color"] = "white"
+    plt.rcParams["text.color"] = textcolor
     plt.figure(figsize=(6, 3.0))
     fig = plt.gcf()
 
     # Set the background color
-    fig.set_facecolor("black")
-    fig.set_edgecolor("blue")
+    fig.set_facecolor(background)
+    fig.set_edgecolor(background)
 
     ax = plt.subplot(111, frame_on=False)
     ax.xaxis.set_visible(False)
@@ -498,11 +515,11 @@ def up_downgrades(ticker_symbol, yf_stock):
         if r >= len(cell_colors):
             break
         colors = cell_colors[r]
-        if colors[c] != "black":
+        if colors[c] != background:
             # highlighted cell
-            cell.set_text_props(color="black")  # fontweight="bold",
+            cell.set_text_props(color=background)  # fontweight="bold",
         else:
-            cell.set_text_props(color="white")
+            cell.set_text_props(color=textcolor)
 
     plt.savefig(f"{ticker_symbol}/up_down.png", bbox_inches="tight", pad_inches=0.05)
 
@@ -531,11 +548,12 @@ def get_month(delta):
 
 def recommendations(ticker_symbol, yf_stock):
     df = yf_stock.recommendations  # same as recommendations_summary?
+    plt.rcParams["text.color"] = textcolor
     plt.figure(figsize=(6, 1.5))
     fig = plt.gcf()
 
     # Set the background color
-    fig.set_facecolor("#37474f")
+    fig.set_facecolor(background)
 
     ax = plt.subplot(111, frame_on=False)
     ax.xaxis.set_visible(False)
@@ -563,8 +581,10 @@ def recommendations(ticker_symbol, yf_stock):
         colLabels=colLabels,  # head_rows.columns,
         cellLoc="center",
         loc="center",
-        colColours=["#f0f0f0"] * len(colLabels),
-        cellColours=[["#f0f0f0", "#f0f0f0", "#f0f0f0", "#f0f0f0", "#f0f0f0", "#f0f0f0"]]
+        colColours=[background] * len(colLabels),
+        cellColours=[
+            [background, background, background, background, background, background]
+        ]
         * len(df),
     )
 
@@ -600,11 +620,12 @@ def dollars_to_words(val):
 
 def earnings(ticker_symbol, yf_stock):
     df = yf_stock.earnings_dates
+    plt.rcParams["text.color"] = textcolor
     plt.figure(figsize=(6, 2.3))
     fig = plt.gcf()
 
     # Set the background color
-    fig.set_facecolor("#37474f")
+    fig.set_facecolor(background)
 
     ax = plt.subplot(111, frame_on=False)
     ax.xaxis.set_visible(False)
@@ -626,13 +647,14 @@ def earnings(ticker_symbol, yf_stock):
     cell_colors = []
     for i, (index, row) in enumerate(df_rows.iterrows()):
         if row["Surprise(%)"] < -0.01:
-            surprise_color = "red"
+            surprise_color = "fuchsia"
         elif row["Surprise(%)"] > 0.1:
-            surprise_color = "#7fff7f"  # "green"
+            surprise_color = "chartreuse"
         else:
-            surprise_color = "#f0f0f0"
+            surprise_color = background
 
-        cell_colors.append(["#f0f0f0", "#f0f0f0", "#f0f0f0", surprise_color])
+        row["Surprise(%)"] = row["Surprise(%)"].round(5)
+        cell_colors.append([background, background, background, surprise_color])
         table_data.append(
             [
                 index.strftime("%Y-%m-%d"),
@@ -648,9 +670,20 @@ def earnings(ticker_symbol, yf_stock):
         colLabels=colLabels,
         cellLoc="center",
         loc="center",
-        colColours=["#f0f0f0"] * len(colLabels),
+        colColours=[background] * len(colLabels),
         cellColours=cell_colors,
     )
+    for i, cell in enumerate(table.get_celld().values()):
+        c = i % len(colLabels)
+        r = int(i / len(colLabels))
+        if r >= len(cell_colors):
+            break
+        colors = cell_colors[r]
+        if colors[c] != background:
+            # highlighted cell
+            cell.set_text_props(color=background)  # fontweight="bold",
+        else:
+            cell.set_text_props(color=textcolor)
 
     plt.savefig(f"{ticker_symbol}/earnings.png", bbox_inches="tight", pad_inches=0.05)
 
@@ -672,14 +705,8 @@ def get_charts(ticker_symbol, start_date, end_date):
     # Fetch historical stock data
     stock_data = yf.download(ticker_symbol, start=start_date, end=end_date)
 
-    # test
-    up_downgrades(ticker_symbol, yf_stock)
-    exit(0)
-    # test
-
     # Candle 5 year
     candle(ticker_symbol=ticker_symbol, period="5 Year", stock_data=stock_data)
-    exit(0)
     moving_averages(ticker_symbol=ticker_symbol, days=365, data=stock_data)
 
     # Candle 90 days
@@ -696,7 +723,7 @@ def get_charts(ticker_symbol, start_date, end_date):
     five_day = stock_data.tail(5)
     candle(ticker_symbol=ticker_symbol, period="5 Day", stock_data=five_day)
 
-    options(ticker_symbol, yf_stock)
+    # options(ticker_symbol, yf_stock)
     earnings(ticker_symbol, yf_stock)
     recommendations(ticker_symbol, yf_stock)
     up_downgrades(ticker_symbol, yf_stock)

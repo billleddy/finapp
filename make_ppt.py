@@ -268,7 +268,7 @@ def main():
     get_url(ticker_symbol, url)
 
     # Start with the template
-    open_template("template.pptx", ticker_symbol)
+    open_template("Template2.pptx", ticker_symbol)
     title(company, ticker_symbol)
     overview(company, ticker_symbol)
     headlines(company, ticker_symbol)
